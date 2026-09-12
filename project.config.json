@@ -1,0 +1,19 @@
+{
+  "appid": "touristappid",
+  "projectname": "Puzzleball",
+  "description": "彩色连珠微信小程序",
+  "compileType": "miniprogram",
+  "miniprogramRoot": "miniprogram/",
+  "libVersion": "widelyUsed",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "postcss": true,
+    "minified": true,
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "urlCheck": true,
+    "checkSiteMap": true
+  },
+  "condition": {}
+}
