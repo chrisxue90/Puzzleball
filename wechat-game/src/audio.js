@@ -1,23 +1,15 @@
+import { AUDIO_CUES } from '../shared/audio-cues.js';
+
 let audioContext = null;
 
-const NOTES = {
-  tap: [420],
-  select: [570, 720],
-  move: [360, 470],
-  clear: [520, 660, 820, 1040],
-  spawn: [260, 310, 360],
-  bad: [150, 115],
-  over: [430, 330, 230]
-};
-
-function play(kind, enabled) {
-  if (!enabled || !NOTES[kind] || typeof wx.createWebAudioContext !== 'function') return;
+export function playSound(kind, enabled) {
+  if (!enabled || !AUDIO_CUES[kind] || typeof wx.createWebAudioContext !== 'function') return;
 
   try {
     if (!audioContext) audioContext = wx.createWebAudioContext();
     if (audioContext.state === 'suspended') audioContext.resume();
 
-    NOTES[kind].forEach((frequency, index) => {
+    AUDIO_CUES[kind].forEach((frequency, index) => {
       const oscillator = audioContext.createOscillator();
       const gain = audioContext.createGain();
       const start = audioContext.currentTime + index * 0.055;
@@ -33,9 +25,7 @@ function play(kind, enabled) {
       oscillator.start(start);
       oscillator.stop(start + duration + 0.02);
     });
-  } catch (error) {
-    // Audio is enhancement-only; unsupported devices continue silently.
+  } catch {
+    // Audio is enhancement-only. Unsupported devices continue silently.
   }
 }
-
-module.exports = { play };

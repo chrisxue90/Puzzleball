@@ -2,6 +2,7 @@
   "name": "color-mini-lines",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.19.0",
   "engines": {
     "node": ">=22.13.0"
   },
@@ -13,9 +14,11 @@
     "start:backend": "node miniprogram/backend/src/server.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "check:structure": "node scripts/check-project-structure.mjs",
-    "check:miniprogram": "node scripts/check-miniprogram.mjs",
+    "test:game-core": "node --test tests/game-core.test.mjs",
+    "test:wechat-game": "node --test tests/wechat-game-smoke.test.mjs",
+    "check:wechat-game": "node scripts/check-wechat-game.mjs",
     "check:backend": "node --check miniprogram/backend/src/server.mjs && node --test miniprogram/backend/test/*.test.mjs",
-    "check:all": "pnpm check:structure && pnpm lint && pnpm build && pnpm check:miniprogram && pnpm check:backend"
+    "check:all": "pnpm check:structure && pnpm test:game-core && pnpm test:wechat-game && pnpm lint && pnpm build && pnpm check:wechat-game && pnpm check:backend"
   },
   "dependencies": {
     "next": "16.2.6",

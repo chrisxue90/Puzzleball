@@ -1,14 +1,27 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  BALL_COLORS,
+  BOARD_SIZE,
+  CELL_COUNT,
+  GAME_RULES_VERSION,
+  createInitialBoard,
+  createNextColors,
+  resolveMove,
+  scoreForClear,
+  type BallColor,
+} from '../wechat-game/shared/game-core.js';
+import { AUDIO_CUES } from '../wechat-game/shared/audio-cues.js';
 
-type Ball = 'red' | 'yellow' | 'cyan' | 'violet' | 'orange' | 'lime' | 'pink';
+type Ball = BallColor;
 type Mode = 'classic' | 'rush';
 type Screen = 'menu' | 'game';
 type Panel = 'scores' | 'settings' | 'modes' | 'help' | null;
 type GameStatus = 'playing' | 'gameover';
 
 type SavedGame = {
+  rulesVersion?: number;
   board: (Ball | null)[];
   nextBalls: Ball[];
   score: number;
@@ -17,80 +30,19 @@ type SavedGame = {
   timeLeft: number;
 };
 
-const SIZE = 9;
-const CELLS = SIZE * SIZE;
-const COLORS: Ball[] = ['red', 'yellow', 'cyan', 'violet', 'orange', 'lime', 'pink'];
+const SIZE = BOARD_SIZE;
+const CELLS = CELL_COUNT;
+const COLORS = BALL_COLORS;
 const SAVE_KEY = 'puzzle-ball-save-v2';
 const SCORES_KEY = 'puzzle-ball-scores-v2';
 const SETTINGS_KEY = 'puzzle-ball-settings-v2';
-
-const randomColor = () => COLORS[Math.floor(Math.random() * COLORS.length)];
-const nextColors = () => [randomColor(), randomColor(), randomColor()];
-const choose = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)];
-
-function lineCells(board: (Ball | null)[], origin: number) {
-  const color = board[origin];
-  if (!color) return new Set<number>();
-  const row = Math.floor(origin / SIZE);
-  const col = origin % SIZE;
-  const found = new Set<number>();
-  const directions = [[1, 0], [0, 1], [1, 1], [1, -1]];
-  for (const [dr, dc] of directions) {
-    const run = [origin];
-    for (const sign of [-1, 1]) {
-      let r = row + dr * sign;
-      let c = col + dc * sign;
-      while (r >= 0 && r < SIZE && c >= 0 && c < SIZE && board[r * SIZE + c] === color) {
-        run.push(r * SIZE + c);
-        r += dr * sign;
-        c += dc * sign;
-      }
-    }
-    if (run.length >= 5) run.forEach((cell) => found.add(cell));
-  }
-  return found;
-}
-
-function findPath(board: (Ball | null)[], from: number, to: number) {
-  if (from === to || board[to]) return false;
-  const queue = [from];
-  const seen = new Set([from]);
-  while (queue.length) {
-    const current = queue.shift()!;
-    const row = Math.floor(current / SIZE);
-    const col = current % SIZE;
-    for (const [dr, dc] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const r = row + dr; const c = col + dc;
-      if (r < 0 || r >= SIZE || c < 0 || c >= SIZE) continue;
-      const next = r * SIZE + c;
-      if (next === to) return true;
-      if (!board[next] && !seen.has(next)) { seen.add(next); queue.push(next); }
-    }
-  }
-  return false;
-}
-
-function newBoard() {
-  const board: (Ball | null)[] = Array(CELLS).fill(null);
-  const slots = Array.from({ length: CELLS }, (_, i) => i);
-  for (let i = 0; i < 5; i++) {
-    const slot = choose(slots);
-    slots.splice(slots.indexOf(slot), 1);
-    board[slot] = randomColor();
-  }
-  return board;
-}
 
 let audioContext: AudioContext | null = null;
 function sound(kind: 'tap' | 'select' | 'move' | 'clear' | 'spawn' | 'bad' | 'over', enabled: boolean) {
   if (!enabled || typeof window === 'undefined') return;
   audioContext ??= new AudioContext();
   const ctx = audioContext;
-  const notes: Record<typeof kind, number[]> = {
-    tap: [420], select: [570, 720], move: [360, 470], clear: [520, 660, 820, 1040],
-    spawn: [260, 310, 360], bad: [150, 115], over: [430, 330, 230],
-  };
-  notes[kind].forEach((frequency, i) => {
+  AUDIO_CUES[kind].forEach((frequency, i) => {
     const oscillator = ctx.createOscillator();
     const gain = ctx.createGain();
     oscillator.type = kind === 'bad' ? 'square' : 'sine';
@@ -108,8 +60,8 @@ function sound(kind: 'tap' | 'select' | 'move' | 'clear' | 'spawn' | 'bad' | 'ov
 export default function Home() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [panel, setPanel] = useState<Panel>(null);
-  const [board, setBoard] = useState<(Ball | null)[]>(() => newBoard());
-  const [nextBalls, setNextBalls] = useState<Ball[]>(() => nextColors());
+  const [board, setBoard] = useState<(Ball | null)[]>(() => createInitialBoard());
+  const [nextBalls, setNextBalls] = useState<Ball[]>(() => createNextColors());
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [mode, setMode] = useState<Mode>('classic');
@@ -150,7 +102,7 @@ export default function Home() {
 
   useEffect(() => {
     if (screen !== 'game') return;
-    const game: SavedGame = { board, nextBalls, score, mode, status, timeLeft };
+    const game: SavedGame = { rulesVersion: GAME_RULES_VERSION, board, nextBalls, score, mode, status, timeLeft };
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(game)); } catch { /* noop */ }
   }, [board, mode, nextBalls, score, screen, status, timeLeft]);
 
@@ -177,7 +129,7 @@ export default function Home() {
 
   const startGame = (chosenMode: Mode) => {
     sound('tap', soundOn);
-    setMode(chosenMode); setBoard(newBoard()); setNextBalls(nextColors()); setScore(0);
+    setMode(chosenMode); setBoard(createInitialBoard()); setNextBalls(createNextColors()); setScore(0);
     setSelected(null); setTimeLeft(120); setStatus('playing'); setFresh(new Set());
     setSavedAvailable(true); setPanel(null); setScreen('game');
   };
@@ -194,7 +146,7 @@ export default function Home() {
   };
 
   const award = (count: number) => {
-    const points = 10 + Math.max(0, count - 5) * 5;
+    const points = scoreForClear(count);
     setScore((value) => value + points);
     if (mode === 'rush') setTimeLeft((seconds) => Math.min(120, seconds + count * 2));
     sound('clear', soundOn);
@@ -202,44 +154,28 @@ export default function Home() {
     showToast(`漂亮！消除 ${count} 颗  +${points}`);
   };
 
-  const addNextBalls = (current: (Ball | null)[]) => {
-    const updated = [...current];
-    const empties = updated.map((cell, index) => cell ? -1 : index).filter((index) => index >= 0);
-    const placed: number[] = [];
-    const amount = Math.min(empties.length, mode === 'rush' ? 4 : 3);
-    for (let i = 0; i < amount; i++) {
-      const slot = choose(empties);
-      empties.splice(empties.indexOf(slot), 1);
-      updated[slot] = nextBalls[i % nextBalls.length]; placed.push(slot);
-    }
-    const clearing = new Set<number>();
-    placed.forEach((slot) => lineCells(updated, slot).forEach((cell) => clearing.add(cell)));
-    if (clearing.size) { clearing.forEach((cell) => { updated[cell] = null; }); award(clearing.size); }
-    setFresh(new Set(placed.filter((cell) => !clearing.has(cell))));
-    setTimeout(() => setFresh(new Set()), 420);
-    setNextBalls(nextColors());
-    sound('spawn', soundOn);
-    if (!updated.some((cell) => cell === null)) { setStatus('gameover'); sound('over', soundOn); }
-    return updated;
-  };
-
   const handleCell = (index: number) => {
     if (status !== 'playing') return;
     const cell = board[index];
     if (cell) { setSelected(index); sound('select', soundOn); return; }
     if (selected === null) { showToast('请先点选一颗彩球'); sound('bad', soundOn); return; }
-    if (!findPath(board, selected, index)) { showToast('没有可通行的路线'); sound('bad', soundOn); return; }
+    const result = resolveMove(board, selected, index, nextBalls, mode === 'rush' ? 4 : 3);
+    if (!result.ok) { showToast('没有可通行的路线'); sound('bad', soundOn); return; }
 
-    const moved = [...board];
-    moved[index] = moved[selected]; moved[selected] = null;
-    setSelected(null); sound('move', soundOn);
-    const clearing = lineCells(moved, index);
-    if (clearing.size) {
-      clearing.forEach((cellIndex) => { moved[cellIndex] = null; });
-      award(clearing.size); setBoard(moved);
+    setSelected(null);
+    setBoard(result.board);
+    sound('move', soundOn);
+    if (result.cleared.length) award(result.cleared.length);
+    if (result.spawned) {
+      const visiblePlaced = result.placed.filter((cell) => !result.cleared.includes(cell));
+      setFresh(new Set(visiblePlaced));
+      setTimeout(() => setFresh(new Set()), 420);
+      setNextBalls(createNextColors());
+      sound('spawn', soundOn);
     } else {
-      setBoard(addNextBalls(moved));
+      setFresh(new Set());
     }
+    if (result.gameOver) { setStatus('gameover'); sound('over', soundOn); }
   };
 
   const focusCell = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {

@@ -11,13 +11,11 @@ const requiredFiles = [
   'public/manifest.webmanifest',
   'public/sw.js',
   '.openai/hosting.json',
-  'miniprogram/frontend/app.js',
-  'miniprogram/frontend/app.json',
-  'miniprogram/frontend/app.wxss',
-  'miniprogram/frontend/pages/index/index.js',
-  'miniprogram/frontend/pages/index/index.json',
-  'miniprogram/frontend/pages/index/index.wxml',
-  'miniprogram/frontend/pages/index/index.wxss',
+  'wechat-game/game.js',
+  'wechat-game/game.json',
+  'wechat-game/project.config.json',
+  'wechat-game/src/game-app.js',
+  'wechat-game/shared/game-core.js',
   'miniprogram/backend/package.json',
   'miniprogram/backend/src/server.mjs',
   'miniprogram/backend/test/health.test.mjs',
@@ -37,18 +35,11 @@ function readJson(relativePath) {
   }
 }
 
-const projectConfig = readJson('project.config.json');
-if (projectConfig?.miniprogramRoot !== 'miniprogram/frontend/') {
-  errors.push('project.config.json 必须将 miniprogramRoot 指向 miniprogram/frontend/');
-}
+const projectConfig = readJson('wechat-game/project.config.json');
+if (projectConfig?.compileType !== 'game') errors.push('微信端必须配置为微信小游戏 compileType: game');
 
 const manifest = readJson('public/manifest.webmanifest');
 if (manifest?.name !== '彩色小连珠') errors.push('网页 PWA 名称未统一为“彩色小连珠”');
-
-const miniConfig = readJson('miniprogram/frontend/app.json');
-if (miniConfig?.window?.navigationBarTitleText !== '彩色小连珠') {
-  errors.push('微信小程序名称未统一为“彩色小连珠”');
-}
 
 const readmePath = path.join(root, 'README.md');
 if (fs.existsSync(readmePath)) {
@@ -68,4 +59,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log('项目结构检查通过：网页版、微信小程序前端和独立后端目录均已完整。');
+console.log('项目结构检查通过：网页版、微信小游戏和独立后端目录均已完整。');
