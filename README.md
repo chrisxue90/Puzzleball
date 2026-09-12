@@ -10,6 +10,8 @@
 | 微信小游戏 | `wechat-game/` | Canvas 2D/JavaScript，可作为完整项目导入微信开发者工具 |
 | 微信端后端 | `miniprogram/backend/` | 独立 Node.js 基础服务，目前只提供健康检查，未接入游戏业务 |
 
+后续开发 agent 应先阅读 [`AGENTS.md`](AGENTS.md)。其中记录了唯一源码、模块边界、微信开发者工具导入方式、改动位置、验收命令、安全要求和当前待办。
+
 ## 功能
 
 - `9 × 9` 等分棋盘，格子视觉尺寸与触控区域一致
@@ -108,6 +110,7 @@ scripts/                          项目结构与小游戏静态检查
 tests/game-core.test.mjs          跨端共享规则测试
 .openai/hosting.json              网页版 Sites 发布配置
 .github/workflows/ci.yml          GitHub 自动质量检查
+AGENTS.md                         后续开发 agent 的仓库交接与约束
 ```
 
 ## 数据与部署边界
