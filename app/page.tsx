@@ -130,15 +130,18 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    try {
-      setSavedAvailable(Boolean(localStorage.getItem(SAVE_KEY)));
-      const scores = JSON.parse(localStorage.getItem(SCORES_KEY) || '{}');
-      setHighScores({ classic: Number(scores.classic) || 0, rush: Number(scores.rush) || 0 });
-      const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
-      if (typeof settings.soundOn === 'boolean') setSoundOn(settings.soundOn);
-      if (typeof settings.vibrationOn === 'boolean') setVibrationOn(settings.vibrationOn);
-    } catch { /* Local storage can be unavailable in private browsing. */ }
+    const hydrateTimer = window.setTimeout(() => {
+      try {
+        setSavedAvailable(Boolean(localStorage.getItem(SAVE_KEY)));
+        const scores = JSON.parse(localStorage.getItem(SCORES_KEY) || '{}');
+        setHighScores({ classic: Number(scores.classic) || 0, rush: Number(scores.rush) || 0 });
+        const settings = JSON.parse(localStorage.getItem(SETTINGS_KEY) || '{}');
+        if (typeof settings.soundOn === 'boolean') setSoundOn(settings.soundOn);
+        if (typeof settings.vibrationOn === 'boolean') setVibrationOn(settings.vibrationOn);
+      } catch { /* Local storage can be unavailable in private browsing. */ }
+    }, 0);
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => undefined);
+    return () => window.clearTimeout(hydrateTimer);
   }, []);
 
   useEffect(() => {
@@ -148,7 +151,7 @@ export default function Home() {
   useEffect(() => {
     if (screen !== 'game') return;
     const game: SavedGame = { board, nextBalls, score, mode, status, timeLeft };
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(game)); setSavedAvailable(true); } catch { /* noop */ }
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(game)); } catch { /* noop */ }
   }, [board, mode, nextBalls, score, screen, status, timeLeft]);
 
   useEffect(() => {
@@ -162,18 +165,21 @@ export default function Home() {
 
   useEffect(() => {
     if (status !== 'gameover') return;
-    setHighScores((current) => {
-      const updated = { ...current, [mode]: Math.max(current[mode], score) };
-      try { localStorage.setItem(SCORES_KEY, JSON.stringify(updated)); } catch { /* noop */ }
-      return updated;
-    });
+    const scoreTimer = window.setTimeout(() => {
+      setHighScores((current) => {
+        const updated = { ...current, [mode]: Math.max(current[mode], score) };
+        try { localStorage.setItem(SCORES_KEY, JSON.stringify(updated)); } catch { /* noop */ }
+        return updated;
+      });
+    }, 0);
+    return () => window.clearTimeout(scoreTimer);
   }, [mode, score, status]);
 
   const startGame = (chosenMode: Mode) => {
     sound('tap', soundOn);
     setMode(chosenMode); setBoard(newBoard()); setNextBalls(nextColors()); setScore(0);
     setSelected(null); setTimeLeft(120); setStatus('playing'); setFresh(new Set());
-    setPanel(null); setScreen('game');
+    setSavedAvailable(true); setPanel(null); setScreen('game');
   };
 
   const continueGame = () => {
@@ -259,7 +265,7 @@ export default function Home() {
             <button onClick={() => setPanel('help')} aria-label="玩法说明">帮助</button>
           </header>
 
-          <section className="board-wrap" aria-label="彩色连珠棋盘">
+          <section className="board-wrap" aria-label="彩色小连珠棋盘">
           <div className="board" role="grid" aria-rowcount={9} aria-colcount={9}>
             {board.map((color, index) => {
               const row = Math.floor(index / SIZE); const col = index % SIZE;
@@ -285,7 +291,7 @@ export default function Home() {
             <span>下组颜色</span>
             <div>{nextBalls.map((color, i) => <i className={`mini-ball ${color}`} key={`${color}-${i}`}/>)}</div>
           </div>
-          <div className="ad-free-note">怀旧复刻 · 离线版无广告{mode === 'rush' ? ` · 剩余 ${formatTime}` : ` · 棋盘 ${filled}/81`}</div>
+          <div className="ad-free-note">离线可玩 · 无广告{mode === 'rush' ? ` · 剩余 ${formatTime}` : ` · 棋盘 ${filled}/81`}</div>
         </section>
         {toast && <div className="toast" role="status">{toast}</div>}
         {panel === 'help' && <Modal title="怎么玩" onClose={() => setPanel(null)}><Rules mode={mode}/></Modal>}
@@ -295,14 +301,14 @@ export default function Home() {
 
   return (
     <main className="app-shell menu-screen">
-      <section className="hero" aria-label="彩色连珠 Puzzle Ball">
+      <section className="hero" aria-label="彩色小连珠">
         <div className="mascots" aria-hidden="true">
           <span className="mascot yellow"><i/><b/></span>
           <span className="mascot violet"><i/><b/></span>
           <span className="mascot red"><i/><b/></span>
         </div>
-        <div className="brand-cn">彩色连珠</div>
-        <h1>Puzzle Ball</h1>
+        <div className="brand-cn">9×9 连珠益智游戏</div>
+        <h1>彩色小连珠</h1>
         <div className="board-preview" aria-hidden="true">
           {Array.from({ length: 45 }, (_, i) => <span key={i}>{i % 7 === 0 || i % 11 === 0 ? <i className={`mini-ball ${COLORS[i % COLORS.length]}`}/> : null}</span>)}
         </div>
@@ -318,12 +324,12 @@ export default function Home() {
       <div className="menu-tools">
         <button onClick={() => setPanel('help')}>玩法</button><span>·</span><button onClick={() => setPanel('settings')}>设置</button>
       </div>
-      <footer>怀旧复刻版 · 离线可玩 · 自动保存</footer>
+      <footer>9×9 益智棋盘 · 离线可玩 · 自动保存</footer>
       {toast && <div className="toast" role="status">{toast}</div>}
 
       {panel === 'scores' && <Modal title="本机积分榜" onClose={() => setPanel(null)}><div className="score-list"><p><i className="mini-ball yellow"/><span>经典模式</span><strong>{highScores.classic}</strong></p><p><i className="mini-ball cyan"/><span>闪电模式</span><strong>{highScores.rush}</strong></p><small>纪录只保存在当前设备，不会上传。</small></div></Modal>}
-      {panel === 'modes' && <Modal title="更多玩法" onClose={() => setPanel(null)}><div className="mode-cards"><button onClick={() => startGame('classic')}><i className="mode-icon classic-icon">∞</i><span><strong>经典模式</strong><small>原汁原味的 9×9 彩色连珠</small></span></button><button onClick={() => startGame('rush')}><i className="mode-icon rush-icon">90</i><span><strong>闪电模式</strong><small>2 分钟开局，消除彩球可赢回时间</small></span></button></div><p className="modal-note">扩展模式完全独立，不会改变经典模式的规则、画面或声音。</p></Modal>}
-      {panel === 'settings' && <Modal title="设置" onClose={() => setPanel(null)}><div className="settings-list"><label><span><strong>游戏声音</strong><small>复古合成移动与消除音效</small></span><input type="checkbox" checked={soundOn} onChange={(e) => setSoundOn(e.target.checked)}/></label><label><span><strong>触感反馈</strong><small>支持的手机消除时轻微震动</small></span><input type="checkbox" checked={vibrationOn} onChange={(e) => setVibrationOn(e.target.checked)}/></label></div><div className="install-note"><strong>安装到手机</strong><p>iPhone/iPad：Safari 点“分享”→“添加到主屏幕”。<br/>安卓/电脑：浏览器菜单点“安装应用”。安装后仍可离线游玩。</p></div></Modal>}
+      {panel === 'modes' && <Modal title="更多玩法" onClose={() => setPanel(null)}><div className="mode-cards"><button onClick={() => startGame('classic')}><i className="mode-icon classic-icon">∞</i><span><strong>经典模式</strong><small>标准 9×9 连珠玩法</small></span></button><button onClick={() => startGame('rush')}><i className="mode-icon rush-icon">90</i><span><strong>闪电模式</strong><small>2 分钟开局，消除彩球可赢回时间</small></span></button></div><p className="modal-note">两种模式的规则与纪录互不覆盖。</p></Modal>}
+      {panel === 'settings' && <Modal title="设置" onClose={() => setPanel(null)}><div className="settings-list"><label><span><strong>游戏声音</strong><small>合成移动与消除音效</small></span><input type="checkbox" checked={soundOn} onChange={(e) => setSoundOn(e.target.checked)}/></label><label><span><strong>触感反馈</strong><small>支持的手机消除时轻微震动</small></span><input type="checkbox" checked={vibrationOn} onChange={(e) => setVibrationOn(e.target.checked)}/></label></div><div className="install-note"><strong>安装到手机</strong><p>iPhone/iPad：Safari 点“分享”→“添加到主屏幕”。<br/>安卓/电脑：浏览器菜单点“安装应用”。安装后仍可离线游玩。</p></div></Modal>}
       {panel === 'help' && <Modal title="怎么玩" onClose={() => setPanel(null)}><Rules mode="classic"/></Modal>}
     </main>
   );

@@ -3,7 +3,7 @@
     "pages/index/index"
   ],
   "window": {
-    "navigationBarTitleText": "彩色连珠",
+    "navigationBarTitleText": "彩色小连珠",
     "navigationBarBackgroundColor": "#f7f5ed",
     "navigationBarTextStyle": "black",
     "backgroundColor": "#203343",

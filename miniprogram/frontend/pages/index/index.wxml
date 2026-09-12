@@ -5,8 +5,8 @@
       <view class="mascot violet"><view class="eye left"></view><view class="eye right"></view></view>
       <view class="mascot red"><view class="eye left"></view><view class="eye right"></view></view>
     </view>
-    <view class="brand-cn">彩色连珠</view>
-    <view class="brand-en">Puzzle Ball</view>
+    <view class="brand-cn">9×9 连珠益智游戏</view>
+    <view class="brand-en">彩色小连珠</view>
     <view class="board-preview">
       <block wx:for="{{[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26]}}" wx:key="*this">
         <view class="preview-cell">
@@ -48,7 +48,7 @@
     <button bindtap="showHelp">帮助</button>
   </view>
 
-  <view class="board" role="grid" aria-label="彩色连珠九乘九棋盘">
+  <view class="board" role="grid" aria-label="彩色小连珠九乘九棋盘">
     <button
       wx:for="{{board}}"
       wx:key="index"
@@ -76,5 +76,5 @@
       <view wx:for="{{nextBalls}}" wx:key="index" class="mini-ball {{item}}"></view>
     </view>
   </view>
-  <view class="game-note">怀旧复刻 · 离线版无广告</view>
+  <view class="game-note">离线可玩 · 本机存档 · 无广告</view>
 </view>

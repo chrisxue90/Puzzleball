@@ -1,4 +1,4 @@
-const CACHE = 'puzzle-ball-v2';
+const CACHE = 'color-mini-lines-v3';
 const CORE = ['/', '/manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {

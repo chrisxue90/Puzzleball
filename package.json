@@ -1,5 +1,5 @@
 {
-  "name": "sites-project",
+  "name": "color-mini-lines",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -9,8 +9,13 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
+    "dev:backend": "node --watch miniprogram/backend/src/server.mjs",
+    "start:backend": "node miniprogram/backend/src/server.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "check:miniprogram": "node scripts/check-miniprogram.mjs"
+    "check:structure": "node scripts/check-project-structure.mjs",
+    "check:miniprogram": "node scripts/check-miniprogram.mjs",
+    "check:backend": "node --check miniprogram/backend/src/server.mjs && node --test miniprogram/backend/test/*.test.mjs",
+    "check:all": "pnpm check:structure && pnpm lint && pnpm build && pnpm check:miniprogram && pnpm check:backend"
   },
   "dependencies": {
     "next": "16.2.6",

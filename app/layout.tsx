@@ -2,14 +2,14 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: '彩色连珠 · Puzzle Ball',
-  description: '经典彩色连珠游戏，支持手机、平板与电脑。',
+  title: '彩色小连珠',
+  description: '轻松好上手的 9×9 连珠益智游戏，支持手机、平板与电脑。',
   manifest: '/manifest.webmanifest',
-  applicationName: '彩色连珠',
-  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: '彩色连珠' },
+  applicationName: '彩色小连珠',
+  appleWebApp: { capable: true, statusBarStyle: 'black-translucent', title: '彩色小连珠' },
   formatDetection: { telephone: false },
-  openGraph: { title: '彩色连珠 · Puzzle Ball', description: '熟悉的 9×9 彩色连珠，随时随地打开就能玩。', type: 'website', locale: 'zh_CN' },
-  twitter: { card: 'summary', title: '彩色连珠 · Puzzle Ball', description: '熟悉的 9×9 彩色连珠，随时随地打开就能玩。' },
+  openGraph: { title: '彩色小连珠', description: '9×9 连珠益智挑战，随时随地打开就能玩。', type: 'website', locale: 'zh_CN' },
+  twitter: { card: 'summary', title: '彩色小连珠', description: '9×9 连珠益智挑战，随时随地打开就能玩。' },
 };
 
 export const viewport: Viewport = {
