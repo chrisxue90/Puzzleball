@@ -1,0 +1,15 @@
+{
+  "name": "彩色连珠 · Puzzle Ball",
+  "short_name": "彩色连珠",
+  "description": "经典 9×9 彩色连珠游戏",
+  "lang": "zh-CN",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#314d49",
+  "theme_color": "#526963",
+  "categories": ["games", "puzzle"],
+  "shortcuts": [
+    { "name": "开始游戏", "short_name": "新游戏", "url": "/" }
+  ]
+}
